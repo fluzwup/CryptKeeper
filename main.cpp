@@ -194,6 +194,65 @@ int TestAES()
 }
 
 #include "misc.h"
+#include "DES.h"
+
+void ValidateDESImplementation()
+{
+	/*
+	https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-67r1.pdf
+	Appendix B.1
+	*/
+	string key = "0123456789ABCDEF23456789ABCDEF01456789ABCDEF0123";
+	vector<string> input;
+	vector<string> output;
+
+	input.push_back("5468652071756663");
+	output.push_back("A826FD8CE53B855F");
+	input.push_back("6B2062726F776E20");
+	output.push_back("CCE21C8112256FE6");
+	input.push_back("666F78206A756D70");
+	output.push_back("68D5C05DD9B6B900");
+
+	int len;
+	unsigned char k[24];
+
+	len = 24;
+	Hex2Bin(key.c_str(), k, len);
+
+	for(int i = 0; i < input.size(); ++i)
+	{
+		printf("3DES encryption algorithm validation, test case %i\n", i);
+
+		unsigned char in[8];
+		unsigned char ref[8];
+		unsigned char out[8];
+		
+		len = 8;
+		Hex2Bin(input[i].c_str(), in, len);
+		Hex2Bin(output[i].c_str(), ref, len);
+
+		// encrypt a block
+		encryptECB(k, 24, in, 8, out);
+
+		// check against 3rd stage output
+		for(int j = 0; j < 8; ++j)
+		{
+			if(ref[i] != out[i])
+				printf("Error at %i byte %i on encryption!\n", i, j);
+		}
+
+		// decrypt the block
+		decryptECB(k, 24, out, 8, out);
+
+		// check against input
+		for(int j = 0; j < 8; ++j)
+		{
+			if(in[i] != out[i])
+				printf("Error at %i byte %i on decryption!\n", i, j);
+		}
+	}
+
+}
 
 void ValidateAESImplementation()
 {
@@ -290,9 +349,11 @@ void ValidateAESImplementation()
 
 int main(int argc, char **argv)
 {
+	ValidateDESImplementation();
 	printf("Testing DES version.\n");
 	TestDES();
 
+	ValidateAESImplementation();
 	printf("Testing AES version.\n");
 	TestAES();
 

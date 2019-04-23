@@ -48,6 +48,11 @@ void CryptKeeper::ModifyNonce(size_t counter, vector<unsigned char> &modifiedNon
 	return;
 }
 
+/*
+ * Read the blocks containing the target data from the file
+ * Decrypt the data using the block offset
+ * Copy the target data into the read buffer
+ */
 size_t CryptKeeper::Read(void *buffer, size_t count)
 {
 	assert(fileOffset >= 0);
@@ -90,6 +95,11 @@ size_t CryptKeeper::Read(void *buffer, size_t count)
 	return end - start;
 }
 
+/*
+ * Read any existing data in the target blocks from the file and decrypt
+ * Write the new data into the block buffer at the appropriate spot
+ * Encrypt the blocks and write them back out.
+ */
 size_t CryptKeeper::Write(void *buffer, size_t count)
 {
 	assert(fileOffset >= 0);
@@ -150,7 +160,7 @@ size_t CryptKeeper::Write(void *buffer, size_t count)
 
 	return count;
 }
-
+/* Set the file size to zero, create a random nonce. */
 void CryptKeeper::InitFileHeader()
 {
 	// set size to zero
@@ -196,13 +206,17 @@ bool CryptKeeper::ReadFileHeader()
 		Hex2Bin(hexNonce.c_str(), &nonce[0], len);
 	}
 
-	if(name != "Cryptkeeper") return false;
+	if(name != "CryptKeeper") return false;
 	if(version != fileVersion) return false;
 	if(kcv != GetKCV()) return false;
 
 	return false;
 }
 
+/* Open the file, using a subset of fopen modes.  We'll really open the file in
+ * read-only or w+ mode, since any writes need to be able to update the file size
+ * in the header.
+ */
 bool CryptKeeper::Open(const char *filename, const char *mode)
 {
 	fp = NULL;
@@ -264,22 +278,14 @@ void CryptKeeper::Close()
 
 		fseek(fp, 0, SEEK_SET);
 
-		if(fileVersion == "1.0")
-		{
-			// leave off nonce
-			fprintf(fp, "Cryptkeeper %s %i %s\n", fileVersion.c_str(),
-				fileSize, GetKCV().c_str());
-		}
-		else
-		{
-			fprintf(fp, "Cryptkeeper %s %i %s %s\n", fileVersion.c_str(),
-				fileSize, GetKCV().c_str(), hexNonce.c_str());
-		}
+		fprintf(fp, "Cryptkeeper %s %i %s %s\n", fileVersion.c_str(),
+			fileSize, GetKCV().c_str(), hexNonce.c_str());
 	}
 	
 	fclose(fp);
 }
 
+// set file offset to appropriate spot
 void CryptKeeper::Seek(size_t offset, int origin)
 {
 	if(origin == SEEK_SET)
@@ -300,6 +306,7 @@ void CryptKeeper::Seek(size_t offset, int origin)
 	if(readOnly && fileOffset > fileSize) fileOffset = fileSize;
 }
 
+// return current spot in file
 size_t CryptKeeper::Tell()
 {
 	return fileOffset;
