@@ -242,8 +242,20 @@ bool CryptKeeper::Open(const char *filename, const char *mode)
 	else if(strcmp(mode, "a") == 0)
 	{
 		fp = fopen(filename, "r+");	
-		ReadFileHeader();
-		fileOffset = fileSize - 1;
+
+		// fopen "r+" will fail if the file does not exist, but fopen "a" should not;
+		//  create the file with fopen w+ if it doesn't exist
+		if(fp == NULL)
+		{
+			fp = fopen(filename, "w+");
+			InitFileHeader();
+			fileOffset = 0;
+		}
+		else
+		{
+			ReadFileHeader();
+			fileOffset = fileSize - 1;
+		}
 	}
 	else if(strcmp(mode, "r+") == 0)
 	{
