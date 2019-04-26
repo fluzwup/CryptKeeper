@@ -6,14 +6,12 @@
 #include <vector>
 using namespace std;
 
+#include "CryptKeeper.h"
 #include "CryptKeeperAES.h"
 #include "CryptKeeperDES.h"
 
-int TestDES()
+int TestCryptKeeper(CryptKeeper &cc)
 {
-	// Init class with a DES key in the clear (single, double, or triple length, in hex)
-	CryptKeeperDES cc("123456789ABCDEF00000000000000000123456789ABCDEF0");
-
 	// buffer to contain data we're reading
 	unsigned char temp[256];
 
@@ -98,96 +96,45 @@ int TestDES()
 	}
 	cc.Close();
 
-	return 0;
-}
-
-int TestAES()
-{
-	// Init class with a DES key in the clear (single, double, or triple length, in hex)
-	CryptKeeperAES cc("123456789ABCDEF00000000000000000123456789ABCDEF0");
-
-	// buffer to contain data we're reading
-	unsigned char temp[256];
-
-	// set up 32k of sequential numbers to write from, this allows random data checks
-	//  at any given offset
-	unsigned char buffer[32768];
-	for(int i = 0; i < 32768; ++i)
-		buffer[i] = (unsigned char)(i % 256);
-
-	// start fresh
-	unlink("test.dat");
-
-	printf("Generating inital file\n");
-	// test writing in non-block length sections
-	cc.Open("test.dat", "w+");
-	for(int i = 0; i < 16536; i += 13)
+	char text[1024];
+	// now do a test of human readable data
+	cc.Open("test.dat", "w");
+	for(int i = 0; i < 10; ++i)
 	{
-		cc.Write((void *)&buffer[i], 13);
+		sprintf(text, "Line %i of text data to write to file.\n", i);
+		cc.Write(text, strlen(text));
 	}
 	cc.Close();
 
-	printf("Testing reading of file\n");
-	// test reading across block boundaries
-	cc.Open("test.dat", "r");
-	for(int i = 0; i < 16000; i += 1127)
-	{
-		cc.Seek(i, SEEK_SET);
-		cc.Read(temp, 64);
-		for(int j = 0; j < 64; ++j)
-		{
-			if(temp[j] != buffer[j + i]) printf("Read error at %i\n", j + i);
-			break;
-		}
-	}
-
-	printf("Testing writing to file\n");
-	// test writing odd lengths at various spots
-	cc.Open("test.dat", "r+");
-	for(int i = 0; i < 16000; i += 73)
-	{
-		cc.Seek(i, SEEK_SET);
-		cc.Write(&buffer[i], 19);
-	}
-	cc.Close();
-
-	printf("Testing read\n");
-	// test reading across blocks
-	cc.Open("test.dat", "r");
-	for(int i = 0; i < 16000; i += 1127)
-	{
-		cc.Seek(i, SEEK_SET);
-		cc.Read(temp, 64);
-		for(int j = 0; j < 64; ++j)
-		{
-			if(temp[j] != (j + i) % 256) printf("Read error at %i\n", j + i);
-			break;
-		}
-	}
-	cc.Close();
-
-	printf("Appending to file\n");
-	// open to append
+	// test appending
 	cc.Open("test.dat", "a");
-	for(int i = cc.Tell(); i < 20000; i += 29)
+	for(int i = 9; i < 20; ++i)
 	{
-		cc.Write(&buffer[i], 29);
+		sprintf(text, "Line %i of text data to write to file.\n", i);
+		cc.Write(text, strlen(text));
 	}
 	cc.Close();
-	
-	printf("Testing read\n");
-	// check reading across the append boundary
-	cc.Open("test.dat", "r");
-	for(int i = 1600; i < 19000; i += 256)
+
+	// test overwriting beginning
+	cc.Open("test.dat", "r+");
+	cc.Seek(0, SEEK_SET);
+	for(int i = 0; i < 5; ++i)
 	{
-		cc.Seek(i, SEEK_SET);
-		cc.Read(temp, 256);
-		for(int j = 0; j < 256; ++j)
-		{
-			if(temp[j] != (j + i) % 256) printf("Read error at %i\n", j + i);
-			break;
-		}
+		sprintf(text, "Line %i of text data to write to file.\n", i);
+		cc.Write(text, strlen(text));
 	}
+	cc.Close();
+
+	// decrypt the human readable file, decrypt to a text file
+	cc.Open("test.dat", "r");
+	FILE *fp = fopen("test.txt", "w");
+	int bytes = 0;
+	do
+	{
+		bytes = cc.Read(buffer, 17);
+		fwrite(buffer, 1, bytes, fp);
+	} while(bytes == 17);
+	fclose(fp);
 	cc.Close();
 
 	return 0;
@@ -349,13 +296,17 @@ void ValidateAESImplementation()
 
 int main(int argc, char **argv)
 {
-	ValidateDESImplementation();
+	//ValidateAESImplementation();
+	
 	printf("Testing DES version.\n");
-	TestDES();
+	CryptKeeper *cc = new CryptKeeperDES("0123456789ABCDEF23456789ABCDEF01456789ABCDEF0123");
+	TestCryptKeeper(*cc);
+	delete cc;
 
-	ValidateAESImplementation();
 	printf("Testing AES version.\n");
-	TestAES();
+	cc = new CryptKeeperAES("fca02f3d5011cfc5c1e23165d413a049d4526a991827424d896fe3435e0bf68e");
+	TestCryptKeeper(*cc);
+	delete cc;
 
 	return 0;
 }

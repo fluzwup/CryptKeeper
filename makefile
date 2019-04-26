@@ -12,8 +12,8 @@ INCLUDES = -I .  -I /usr/include
 
 LOCATIONS =  -L/usr/local/lib  -L/usr/lib 
 
-LIBRARIES =  
-CXXFLAGS = -O2  -D_NDEBUG
+LIBRARIES =  -lefence
+CXXFLAGS = -ggdb  
 
 CXX = g++ ${CXXFLAGS} -DREENTRANT -D_REENTRANT 
 
