@@ -120,8 +120,8 @@ size_t CryptKeeper::Write(void *buffer, size_t count)
 	// zero out buffer
 	memset(&blockBuffer[0], 0, blockBuffer.size());
 	
-	// if we're writing into existing data, fill the buffer with decrypted data to overlay onto
-	if(start < fileSize)
+	// if we're writing into existing data blocks, fill the buffer with decrypted data to overlay onto
+	if(blockStart * blockSize < fileSize)
 	{
 		// see how many bytes to read
 		size_t readEnd = (end + blockSize - 1) / blockSize;
@@ -243,7 +243,7 @@ bool CryptKeeper::Open(const char *filename, const char *mode)
 	{
 		fp = fopen(filename, "r+");	
 		ReadFileHeader();
-		fileOffset = fileSize;
+		fileOffset = fileSize - 1;
 	}
 	else if(strcmp(mode, "r+") == 0)
 	{

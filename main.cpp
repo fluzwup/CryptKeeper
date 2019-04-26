@@ -101,16 +101,16 @@ int TestCryptKeeper(CryptKeeper &cc)
 	cc.Open("test.dat", "w");
 	for(int i = 0; i < 10; ++i)
 	{
-		sprintf(text, "Line %i of text data to write to file.\n", i);
+		sprintf(text, "Run 1 line %i of text data to write to file.\n", i);
 		cc.Write(text, strlen(text));
 	}
 	cc.Close();
 
 	// test appending
 	cc.Open("test.dat", "a");
-	for(int i = 9; i < 20; ++i)
+	for(int i = 10; i < 20; ++i)
 	{
-		sprintf(text, "Line %i of text data to write to file.\n", i);
+		sprintf(text, "Run 2 line %i of text data to write to file.\n", i);
 		cc.Write(text, strlen(text));
 	}
 	cc.Close();
@@ -120,7 +120,7 @@ int TestCryptKeeper(CryptKeeper &cc)
 	cc.Seek(0, SEEK_SET);
 	for(int i = 0; i < 5; ++i)
 	{
-		sprintf(text, "Line %i of text data to write to file.\n", i);
+		sprintf(text, "Run 3 line %i of text data to write to file.\n", i);
 		cc.Write(text, strlen(text));
 	}
 	cc.Close();
@@ -136,6 +136,9 @@ int TestCryptKeeper(CryptKeeper &cc)
 	} while(bytes == 17);
 	fclose(fp);
 	cc.Close();
+
+	printf("Double-check test.txt file to make sure there are no errors:\n");
+	system("cat test.txt");
 
 	return 0;
 }
