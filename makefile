@@ -4,7 +4,7 @@ BASEDIR = .
 BINARY = cryptkeeper
 
 SOURCES = main.cpp CryptKeeper.cpp CryptKeeperDES.cpp DES.cpp misc.cpp \
-		  CryptKeeperAES.cpp aes256.c
+		  CryptKeeperAES.cpp aes256.c CryptKeeperPW.cpp
 
 OBJECTS = ${SOURCES:.cpp=.o} 
 
@@ -12,7 +12,7 @@ INCLUDES = -I .  -I /usr/include
 
 LOCATIONS =  -L/usr/local/lib  -L/usr/lib 
 
-LIBRARIES =  -lefence
+LIBRARIES =  -lcrypto #-lefence
 CXXFLAGS = -ggdb  
 
 CXX = g++ ${CXXFLAGS} -DREENTRANT -D_REENTRANT 
