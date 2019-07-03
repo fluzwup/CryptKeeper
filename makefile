@@ -13,7 +13,7 @@ INCLUDES = -I .  -I /usr/include
 
 LOCATIONS =  -L/usr/local/lib  -L/usr/lib 
 
-LIBRARIES =  -lcrypto #-lefence
+LIBRARIES =  -lcrypto 
 CXXFLAGS = -ggdb  
 
 CXX = g++ ${CXXFLAGS} -DREENTRANT -D_REENTRANT 
