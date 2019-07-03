@@ -35,15 +35,21 @@ CryptKeeper::~CryptKeeper()
 {
 }
 
-void CryptKeeper::ModifyNonce(size_t counter, vector<unsigned char> &modifiedNonce)
+void CryptKeeper::ModifyNonce(size_t counter_size_t, vector<unsigned char> &modifiedNonce)
 {
 	// It doesn't really matter how we combine the nonce and counter, as long as
 	//  it's consistent, and the output is unique for each value of counter.
 	modifiedNonce = nonce;
 
-	unsigned char *counterBytes = (unsigned char *)&counter;
-	for(int i = 0; i < sizeof(size_t); ++i)
-		modifiedNonce[blockSize - 1 - i] = counterBytes[i];
+	// since size_t varies in size across platforms, force it to a 4 byte integer so that
+	//  32 and 64 bit implementations will behave the same
+	int32_t counter = (int32_t)(counter_size_t & 0xFFFFFFFF);
+
+	// this should work independently of CPU byte order
+	modifiedNonce[blockSize - 1] ^= (unsigned char)(counter & 0xff);
+	modifiedNonce[blockSize - 2] ^= (unsigned char)((counter << 8) & 0xff);
+	modifiedNonce[blockSize - 3] ^= (unsigned char)((counter << 16) & 0xff);
+	modifiedNonce[blockSize - 4] ^= (unsigned char)((counter << 24) & 0xff);
 
 	return;
 }
